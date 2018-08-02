@@ -151,7 +151,7 @@ class Commands(object):
             response.add_field(name="Here's what you got", value=text)
             return response
         else:
-            copy("stats.yaml", "users")
+            copy("Static/Idle/baseStats.yaml", "users")
             os.rename("users/stats.yaml", f"users/{str(message.author.id)}.yaml")
             response = discord.Embed(title="Congratulations", description="You started your adventure")
             return response

@@ -5,7 +5,7 @@ import yaml
 class Prefix(object):
 
     async def getPrefix(self):
-        with open("prefix_conf.yaml", 'r') as stream:
+        with open("Static/Prefix/prefix.yaml", 'r') as stream:
             try:
                 prefix_obj = yaml.load(stream)
                 prefix = prefix_obj['prefix']

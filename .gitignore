@@ -107,4 +107,7 @@ venv.bak/
 .idea/
 
 # secret discord token
-token.yaml
+Static/token.yaml
+
+# user data
+users/
