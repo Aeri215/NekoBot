@@ -2,9 +2,8 @@ import discord
 import yaml
 from shutil import copy
 import os
-from pathlib import Path
 
-from prefix import Prefix
+from mechanics.prefix import Prefix
 from random import randint
 
 client = discord.Client()

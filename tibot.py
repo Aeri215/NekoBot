@@ -1,7 +1,7 @@
-from Commands import *
-from prefix import Prefix
-from CommandCreator import CommandCreator
-from getToken import *
+from Commands.Commands import *
+from mechanics.prefix import Prefix
+from mechanics.CommandCreator import CommandCreator
+from mechanics.getToken import *
 
 TOKEN = GetToken.get_token()
 

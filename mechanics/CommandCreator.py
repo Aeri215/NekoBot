@@ -1,5 +1,5 @@
 import discord
-from prefix import Prefix
+from mechanics.prefix import Prefix
 
 
 class CommandCreator(object):
