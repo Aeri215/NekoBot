@@ -1,10 +1,14 @@
 import discord
 import yaml
-from shutil import copy
 import os
+import requests
+import re
 
+from shutil import copy
 from mechanics.prefix import Prefix
+from mechanics.utils import Utils
 from random import randint
+
 
 client = discord.Client()
 
@@ -17,7 +21,7 @@ class Commands(object):
     async def help(self, message, cmd):
         p = Prefix()
         prefix = await p.getPrefix()
-        response = discord.Embed(title=f'Tibot, the bot')
+        response = discord.Embed(title=f'NekoBot, the bot')
         cmd_list = f'Current prefix is :  **{prefix}** \r'
         cmd_list += 'help : display this list\r'
         cmd_list += 'hello : the bot greets you\r'
@@ -25,7 +29,9 @@ class Commands(object):
         cmd_list += 'info : show info about you or someone else\r'
         cmd_list += 'convert: Convert a number to it\'s short scale\r'
         cmd_list += 'mine: work hard and get money\r'
-        cmd_list += 'shop: upgrade your stuff yo get more money'
+        cmd_list += 'shop: upgrade your stuff yo get more money\r'
+        cmd_list += 'calc: Determine your number\r'
+        cmd_list += 'stream: check if given streamer is currently streaming'
         response.add_field(name='List of all commands', value=cmd_list)
         return response
 
@@ -34,8 +40,11 @@ class Commands(object):
             target = message.mentions[0]
         else:
             target = message.author
-        response = discord.Embed(title=f'{target.display_name} \'s Profile', description='**User profile**',
-                                 color=target.color)
+        response = discord.Embed(color=target.color)
+        response.set_author(name=f"{target.display_name}'s profile", icon_url=target.avatar_url)
+        info = f"Your id : {target.id}\r"
+        info += f"Is a bot : {'Yes' if target.bot else 'No'}"
+        response.add_field(name="Infrmations", value=info)
 
         return response
 
@@ -87,7 +96,7 @@ class Commands(object):
             "centillion"
         ]
 
-        number = cmd[0]
+        number = await Utils.clean_number(cmd[0])
         nbrofnbr = len(number)
         if nbrofnbr%3 == 0:
             step = nbrofnbr//3
@@ -161,7 +170,7 @@ class Commands(object):
         try:
             choice = cmd[0].lower()
             if choice == "luck":
-                if stats["money"]-pow(2, stats["stats"]["luck"]) >= 0:
+                if stats["money"] - pow(2, stats["stats"]["luck"]) >= 0:
                     stats["money"] -= pow(2, stats["stats"]["luck"])
                     stats["stats"][choice] += 1
                 else:
@@ -169,7 +178,7 @@ class Commands(object):
                     return response
 
             else:
-                if stats["money"]-pow(10, stats["stats"][choice]) >= 0:
+                if stats["money"] - pow(10, stats["stats"][choice]) >= 0:
                     stats["money"] -= pow(10, stats["stats"][choice])
                     stats["stats"][choice] += 1
                 else:
@@ -188,4 +197,71 @@ class Commands(object):
             response.add_field(name="Market expertise", value=pow(10, stats["stats"]["market_expertise"]))
             response.add_field(name="Luck", value=pow(2, stats["stats"]["luck"]))
             response.add_field(name="How To buy", value="Use \'shop\' with the name of the upgrade you want to buy it")
+        return response
+
+    async def calc(self, message, cmd):
+        if message.mentions:
+            target = message.mentions[0]
+        else:
+            target = message.author
+        init = str(target.id)
+        nbr1 = init[1]
+        nbr2 = init[3]
+        nbr3 = init[5]
+        result = (int(nbr1) + int(nbr2) + int(nbr3)) * 100 // 27
+        if target.id == str(146009771743379457):  # it's me
+            result = 100
+        response = discord.Embed(title=f"You are {result}%", color=target.color)
+        response.set_author(name=target.display_name, icon_url=target.avatar_url)
+        return response
+
+    async def stream(self, message, cmd):
+        try:
+            streamer = cmd[0].lower()
+            stream = requests.get(f"https://api.twitch.tv/kraken/streams/{streamer}?client_id=89e2ba6q47mxe2m5bvw1k8nyjn9t1x")
+            stream = stream.json()
+            if stream["stream"] == None:
+                response = discord.Embed(title=f"{cmd[0]} is not streaming, or doesn't exist")
+            else:
+                channel = stream["stream"]["channel"]
+                response = discord.Embed(title=f'{channel["status"]}', url=channel["url"])
+                response.set_author(name=channel["name"], icon_url=channel["logo"])
+                response.set_thumbnail(url=channel["logo"])
+                response.set_image(url=stream["stream"]["preview"]["large"])
+        except Exception as e:
+            print(e)
+            response = discord.Embed(title="No argument given")
+        return response
+
+    async def ping(self, message, cmd):
+        response = discord.Embed(title="Pong")
+        return response
+
+    async def keepnbr(self, message, cmd):
+        try:
+            result = await Utils.clean_number(cmd[0])
+            response = discord.Embed(title=result)
+            print(result)
+        except Exception as e:
+            print(e)
+            response = discord.Embed(title="error")
+        return response
+
+    async def addstr(self, message, cmd):
+        try:
+            newcmd = ""
+            for i in cmd:
+                newcmd += i
+            newcmd = await Utils.clean_number(newcmd)
+            print(newcmd)
+            result = re.search(r"(\d*)+(\d*)", newcmd)
+            print(result)
+            print(result.group(0))
+            print(result.group(1))
+            print(result.group(2))
+            print(result.groups())
+            response = discord.Embed(title="ok")
+        except Exception as e:
+            print(e)
+            response = discord.Embed(title="error")
         return response

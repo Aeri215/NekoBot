@@ -14,10 +14,11 @@ class Prefix(object):
             return prefix
 
     async def setPrefix(self, msg):
+        msg = str(msg)
         newprefix = dict(
             prefix=msg,
         )
-        with open('prefix_conf.yaml', 'w') as outfile:
+        with open('Static/Prefix/prefix.yaml', 'w') as outfile:
             yaml.dump(newprefix, outfile, default_flow_style=False)
         prefix = await self.getPrefix()
         return prefix
