@@ -6,7 +6,7 @@ class Prefix(object):
     async def getPrefix(self):
         with open("Static/Prefix/prefix.yaml", 'r') as stream:
             try:
-                prefix_obj = yaml.load(stream)
+                prefix_obj = yaml.load(stream, Loader=yaml.FullLoader)
                 prefix = prefix_obj['prefix']
             except yaml.YAMLError as exc:
                 print(exc)

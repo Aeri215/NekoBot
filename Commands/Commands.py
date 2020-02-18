@@ -1,8 +1,8 @@
-import discord
 import yaml
 import os
 import requests
 import re
+import discord
 
 from shutil import copy
 from mechanics.prefix import Prefix
@@ -10,14 +10,13 @@ from mechanics.utils import Utils
 from random import randint
 
 
-client = discord.Client()
-
-
 class Commands(object):
-    async def hello(self, message , cmd):
+    @staticmethod
+    async def hello(self, message, cmd):
         response = discord.Embed(title=f'Hello {message.author}')
         return response
 
+    @staticmethod
     async def help(self, message, cmd):
         p = Prefix()
         prefix = await p.getPrefix()
@@ -35,6 +34,7 @@ class Commands(object):
         response.add_field(name='List of all commands', value=cmd_list)
         return response
 
+    @staticmethod
     async def info(self, message, cmd):
         if message.mentions:
             target = message.mentions[0]
@@ -48,17 +48,18 @@ class Commands(object):
 
         return response
 
+    @staticmethod
     async def setprefix(self, message, cmd):
         if int(message.author.id) == 146009771743379457:
             prefix = Prefix()
-            prefix = await prefix.setPrefix(cmd[0])
+            prefix = await prefix.setPrefix(cmd[1])
             response = discord.Embed(title='New prefix', description=f'Prefix has been changed to {prefix}')
             return response
         else:
-            print(message.author.id)
             response = discord.Embed(title='Owner only', description=f'I can\'t let you do that')
             return response
 
+    @staticmethod
     async def convert(self, message, cmd):
         data = [
             "Million",
@@ -96,12 +97,12 @@ class Commands(object):
             "centillion"
         ]
 
-        number = await Utils.clean_number(cmd[0])
+        number = await Utils.clean_number(cmd[1])
         nbrofnbr = len(number)
-        if nbrofnbr%3 == 0:
-            step = nbrofnbr//3
+        if nbrofnbr % 3 == 0:
+            step = nbrofnbr // 3
         else:
-            step = nbrofnbr//3 + 1
+            step = nbrofnbr // 3 + 1
         firstnumber = number
         while len(number) > 3:
             number = number[:-3]
@@ -112,33 +113,42 @@ class Commands(object):
             result = f"{firstnumber}"
         elif step > 11:
             step += 1
-            decade = (step//10) - 1
+            decade = (step // 10) - 1
             unit = (step % 10) - 3
             result = f"{number} {data2[unit]}{data3[decade]}"
         else:
-            stepnbr = data[step-3]
+            stepnbr = data[step - 3]
             result = f"{number} {stepnbr}"
         response.add_field(name="input", value=firstnumber)
         response.add_field(name="result", value=result)
         return response
 
-    async def stats(self, message, cmd):
+    @staticmethod
+    async def start(self, message):
+        copy("Static/Idle/baseStats.yaml", "users")
+        os.rename("users/baseStats.yaml", f"users/{str(message.author.id)}.yaml")
 
+    @staticmethod
+    async def stats(self, message, cmd):
+        if not os.path.isfile(f'./users/{str(message.author.id)}.yaml'):
+            self.start(message)
         with open(f"users/{str(message.author.id)}.yaml", 'r') as stream:
-            stats = yaml.load(stream)
-        response = discord.Embed(title="Your stats")
-        response.add_field(name="Money", value=f"{stats['money']} $")
-        response.add_field(name="Strength", value=stats["stats"]["strength"])
-        response.add_field(name="Pickaxe", value=stats["stats"]["pickaxe"])
-        response.add_field(name="Refinery", value=stats["stats"]["refinery"])
-        response.add_field(name="Market expertise", value=stats["stats"]["market_expertise"])
-        response.add_field(name="Luck", value=f"{stats['stats']['luck']}%")
+            stats = yaml.load(stream, Loader=yaml.FullLoader)
+            response = discord.Embed(title="Your stats")
+            response.add_field(name="Money", value=f"{stats['money']} $")
+            response.add_field(name="Strength", value=stats["stats"]["strength"])
+            response.add_field(name="Pickaxe", value=stats["stats"]["pickaxe"])
+            response.add_field(name="Refinery", value=stats["stats"]["refinery"])
+            response.add_field(name="Market", value=stats["stats"]["market"])
+            response.add_field(name="Luck", value=f"{stats['stats']['luck']}%")
         return response
 
+    @staticmethod
     async def mine(self, message, cmd):
-        if os.path.isfile(f'./users/{str(message.author.id)}.yaml'):
-            with open(f"users/{str(message.author.id)}.yaml", 'r') as stream:
-                stats = yaml.load(stream)
+        if not os.path.isfile(f'./users/{str(message.author.id)}.yaml'):
+            self.start(message)
+        with open(f"users/{str(message.author.id)}.yaml", 'r') as stream:
+            stats = yaml.load(stream, Loader=yaml.FullLoader)
             response = discord.Embed(title="You worked hard")
             count = stats["stats"]["strength"]
             text = f"You slammed {count} time (strength level {stats['stats']['strength']})\r"
@@ -146,59 +156,58 @@ class Commands(object):
             text += f"You got {count} rocks (pickaxe level {stats['stats']['pickaxe']})\r"
             count *= stats["stats"]["refinery"]
             text += f"You got {count} gold ore (refinery level {stats['stats']['refinery']})\r"
-            count *= stats["stats"]["market_expertise"]
-            if randint(0, 100 ) < stats["stats"]["luck"]:
+            count *= stats["stats"]["market"]
+            if randint(0, 100) < stats["stats"]["luck"]:
                 count *= 2
-                text += f"You got lucky, you sold it for {count} dollars (market expertise level{stats['stats']['market_expertise']}))\r"
+                text += f"You got lucky, you sold it for {count} dollars (market level{stats['stats']['market']})\r"
             else:
-                text += f"You sold it for {count} dollars (market expertise level {stats['stats']['market_expertise']})\r"
+                text += f"You sold it for {count} dollars (market level {stats['stats']['market']})\r"
             stats["money"] += count
             text += f"You have now {stats['money']} dollars"
             with open("users/" + str(message.author.id) + ".yaml", "w") as outfile:
                 yaml.dump(stats, outfile, default_flow_style=False)
             response.add_field(name="Here's what you got", value=text)
             return response
-        else:
-            copy("tatic/Idle/baseStats.yaml", "users")
-            os.rename("users/stats.yaml", f"users/{str(message.author.id)}.yaml")
-            response = discord.Embed(title="Congratulations", description="You started your adventure")
-            return response
 
+    @staticmethod
     async def shop(self, message, cmd):
+        if not os.path.isfile(f'./users/{str(message.author.id)}.yaml'):
+            self.start(message)
         with open(f"users/{str(message.author.id)}.yaml", 'r') as stream:
-            stats = yaml.load(stream)
-        try:
-            choice = cmd[0].lower()
-            if choice == "luck":
-                if stats["money"] - pow(2, stats["stats"]["luck"]) >= 0:
-                    stats["money"] -= pow(2, stats["stats"]["luck"])
-                    stats["stats"][choice] += 1
-                else:
-                    response = discord.Embed(title="Upgrade failed", description="You can't afford it")
-                    return response
+            stats = yaml.load(stream, Loader=yaml.FullLoader)
+            try:
+                choice = cmd[1].lower()
+                if choice == "luck":
+                    if stats["money"] - pow(2, stats["stats"]["luck"]) >= 0:
+                        stats["money"] -= pow(2, stats["stats"]["luck"])
+                        stats["stats"][choice] += 1
+                    else:
+                        response = discord.Embed(title="Upgrade failed", description="You can't afford it")
+                        return response
 
-            else:
-                if stats["money"] - pow(10, stats["stats"][choice]) >= 0:
-                    stats["money"] -= pow(10, stats["stats"][choice])
-                    stats["stats"][choice] += 1
                 else:
-                    response = discord.Embed(title="Upgrade failed", description="You can't afford it")
-                    return response
-            with open("users/" + str(message.author.id) + ".yaml", "w") as outfile:
-                yaml.dump(stats, outfile, default_flow_style=False)
-            response = discord.Embed(title="Upgrade done", description=f"{choice} upgraded")
+                    if stats["money"] - pow(10, stats["stats"][choice]) >= 0:
+                        stats["money"] -= pow(10, stats["stats"][choice])
+                        stats["stats"][choice] += 1
+                    else:
+                        response = discord.Embed(title="Upgrade failed", description="You can't afford it")
+                        return response
+                with open("users/" + str(message.author.id) + ".yaml", "w") as outfile:
+                    yaml.dump(stats, outfile, default_flow_style=False)
+                response = discord.Embed(title="Upgrade done", description=f"{choice} upgraded")
+                return response
+            except Exception as e:
+                response = discord.Embed(title="Shop")
+                response.add_field(name="Money", value=f"{stats['money']} $")
+                response.add_field(name="Strength", value=f"{pow(10, stats['stats']['strength'])} $")
+                response.add_field(name="Pickaxe", value=f"{pow(10, stats['stats']['pickaxe'])} $")
+                response.add_field(name="Refinery", value=f"{pow(10, stats['stats']['refinery'])} $")
+                response.add_field(name="Market", value=f"{pow(10, stats['stats']['market'])} $")
+                response.add_field(name="Luck", value=f"{pow(2, stats['stats']['luck'])} $")
+                response.add_field(name="How To buy", value="Use \'shop\' with the name of the upgrade you want to buy it")
             return response
-        except:
-            response = discord.Embed(title="Shop")
-            response.add_field(name="Money", value=f"{stats['money']}$")
-            response.add_field(name="Strength", value=pow(10, stats["stats"]["strength"]))
-            response.add_field(name="Pickaxe", value=pow(10, stats["stats"]["pickaxe"]))
-            response.add_field(name="Refinery", value=pow(10, stats["stats"]["refinery"]))
-            response.add_field(name="Market expertise", value=pow(10, stats["stats"]["market_expertise"]))
-            response.add_field(name="Luck", value=pow(2, stats["stats"]["luck"]))
-            response.add_field(name="How To buy", value="Use \'shop\' with the name of the upgrade you want to buy it")
-        return response
 
+    @staticmethod
     async def calc(self, message, cmd):
         if message.mentions:
             target = message.mentions[0]
@@ -215,53 +224,51 @@ class Commands(object):
         response.set_author(name=target.display_name, icon_url=target.avatar_url)
         return response
 
+    @staticmethod
     async def stream(self, message, cmd):
-        try:
-            streamer = cmd[0].lower()
-            stream = requests.get(f"https://api.twitch.tv/kraken/streams/{streamer}?client_id=89e2ba6q47mxe2m5bvw1k8nyjn9t1x")
-            stream = stream.json()
-            if stream["stream"] == None:
-                response = discord.Embed(title=f"{cmd[0]} is not streaming, or doesn't exist")
-            else:
-                channel = stream["stream"]["channel"]
-                response = discord.Embed(title=f'{channel["status"]}', url=channel["url"])
-                response.set_author(name=channel["name"], icon_url=channel["logo"])
-                response.set_thumbnail(url=channel["logo"])
-                response.set_image(url=stream["stream"]["preview"]["large"])
-        except Exception as e:
-            print(e)
+        if len(cmd) > 1:
+            try:
+                streamer = cmd[1].lower()
+                stream = requests.get(
+                    f"https://api.twitch.tv/kraken/streams/{streamer}?client_id=89e2ba6q47mxe2m5bvw1k8nyjn9t1x")
+                stream = stream.json()
+                if stream["stream"] == None:
+                    response = discord.Embed(title=f"{cmd[1]} is not streaming, or doesn't exist")
+                else:
+                    channel = stream["stream"]["channel"]
+                    response = discord.Embed(title=f'{channel["status"]}', url=channel["url"])
+                    response.set_author(name=channel["name"], icon_url=channel["logo"])
+                    response.set_thumbnail(url=channel["logo"])
+                    response.set_image(url=stream["stream"]["preview"]["large"])
+            except Exception as e:
+                response = discord.Embed(title="Error")
+        else:
             response = discord.Embed(title="No argument given")
         return response
 
+    @staticmethod
     async def ping(self, message, cmd):
         response = discord.Embed(title="Pong")
         return response
 
+    @staticmethod
     async def keepnbr(self, message, cmd):
         try:
-            result = await Utils.clean_number(cmd[0])
+            result = await Utils.clean_number(cmd[1])
             response = discord.Embed(title=result)
-            print(result)
         except Exception as e:
-            print(e)
             response = discord.Embed(title="error")
         return response
 
+    @staticmethod
     async def addstr(self, message, cmd):
         try:
             newcmd = ""
             for i in cmd:
                 newcmd += i
             newcmd = await Utils.clean_number(newcmd)
-            print(newcmd)
             result = re.search(r"(\d*)+(\d*)", newcmd)
-            print(result)
-            print(result.group(0))
-            print(result.group(1))
-            print(result.group(2))
-            print(result.groups())
             response = discord.Embed(title="ok")
         except Exception as e:
-            print(e)
             response = discord.Embed(title="error")
         return response
