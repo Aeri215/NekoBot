@@ -9,6 +9,7 @@ COPY requirements.txt requirements.txt
 COPY Commands/ /home/Commands
 COPY mechanics/ /home/mechanics
 COPY Static/ /home/Static
+COPY Static/token.yaml /home/Static/token.yaml
 
 RUN pip install -r requirements.txt
 
