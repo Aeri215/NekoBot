@@ -2,8 +2,3 @@ version: '3'
 services:
   bot:
     build: .
-    volumes:
-      - ./Commands:/home/Commands
-      - ./mechanics:/home/mechanics
-      - ./Static:/home/Static
-      - ./nekobot.py:/home/nekobot.py
