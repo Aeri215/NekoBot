@@ -7,4 +7,3 @@ services:
       - ./mechanics:/home/mechanics
       - ./Static:/home/Static
       - ./nekobot.py:/home/nekobot.py
-      - ./requirements.txt:/home/requirements.txt
