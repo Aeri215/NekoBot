@@ -1,4 +1,5 @@
 #!/bin/bash
 
 git pull
-docker build .
+docker build -t NekoBot .
+docker run NekoBot
