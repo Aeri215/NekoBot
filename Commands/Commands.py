@@ -248,7 +248,7 @@ class Commands(object):
 
     @staticmethod
     async def ping(self, message, cmd):
-        response = discord.Embed(title="Pong4")
+        response = discord.Embed(title="Pong5")
         return response
 
     @staticmethod
