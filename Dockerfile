@@ -7,6 +7,7 @@ RUN pip install --upgrade pip
 COPY nekobot.py /home/nekobot.py
 COPY requirements.txt requirements.txt
 COPY Commands/ /home/Commands
+COPY users/ /home/users
 COPY mechanics/ /home/mechanics
 COPY Static/ /home/Static
 
